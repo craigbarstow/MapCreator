@@ -160,6 +160,8 @@ class Main(QtGui.QMainWindow):
         self.ui.logListWidget.insertItem(self.ui.logListWidget., "Map Creation Complete")
         #scroll to scrollToItem
 
+        #git test
+
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
