@@ -108,6 +108,8 @@ class Main(QtGui.QMainWindow):
                 new_map_name = fileName.strip('.lyr') + ".mxd"
                 self.ui.logListWidget.insertItem(0, "Creating map: " + str(new_map_name))
                 newMapLocation = self.destinationDir + "//" + new_map_name
+                #check to see if map of this name exists in the directory
+                    #if so delete it
                 origMap.saveACopy(newMapLocation)
                 del origMap
 
@@ -157,10 +159,9 @@ class Main(QtGui.QMainWindow):
                 del newMap
 
 
-        self.ui.logListWidget.insertItem(self.ui.logListWidget., "Map Creation Complete")
-        #scroll to scrollToItem
+        self.ui.logListWidget.insertItem(0, "Map Creation Complete")
+            #scroll to scrollToItem
 
-        #git test
 
 
 if __name__ == '__main__':
