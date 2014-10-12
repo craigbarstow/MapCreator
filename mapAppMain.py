@@ -1,8 +1,6 @@
-import sys
 from PyQt4 import QtGui
 from mapCreatorUI import Ui_MapCreator
-#arcpy related stuff
-import arcpy, os, os.path
+import arcpy, os, os.path, sys
 
 class Main(QtGui.QMainWindow):
     def __init__(self):
@@ -102,6 +100,7 @@ class Main(QtGui.QMainWindow):
             print "converting kml files"
 
         #make maps
+        """MAKE SURE .kml or .lyr LAYER FILES ARE PRESENT IN GIVEN DIR"""
         for fileName in os.listdir(self.uniqueLayerLoc):
             if fileName.endswith('.lyr'):
                 origMap = arcpy.mapping.MapDocument(self.templateMapLoc)
@@ -109,12 +108,12 @@ class Main(QtGui.QMainWindow):
                 self.ui.logListWidget.insertItem(0, "Creating map: " + str(new_map_name))
                 newMapLocation = self.destinationDir + "//" + new_map_name
                 #check to see if map of this name exists in the directory
-                    #if so delete it
+                #if so delete it
                 origMap.saveACopy(newMapLocation)
                 del origMap
 
                 #start work on newly created map
-                print "new map location = " + newMapLocation
+                self.ui.logListWidget.insertItem(0, "New Map Location: "+ newMapLocation)
                 newMap = arcpy.mapping.MapDocument(newMapLocation)
 
                 #access basemap frame
@@ -125,15 +124,17 @@ class Main(QtGui.QMainWindow):
                 for layerLocation in self.layerLocations.itervalues():
                     arcpy.mapping.AddLayer(mainFrame, layerLocation, "AUTO_ARRANGE")
 
+                #add unique layer and zoom to extent of it
                 arcpy.mapping.AddLayer(mainFrame, layer_to_add, "TOP")
-                """zoom to extent of newly created layer"""
-                #layer_extent = layer_to_add.getSelectedExtent()
-                #mainFrame.extent = layer_extent
+                mainFrame.zoomToSelectedFeatures()
 
                 #add processing areas layer to extent indicator window
                 extentFrame = arcpy.mapping.ListDataFrames(newMap, "ExtentWindow")[0]
                 arcpy.mapping.AddLayer(extentFrame, layer_to_add, "TOP")
-
+                extentFrame.zoomToSelectedFeatures()
+                """zoom way out from this spot"""
+                #possibly
+                #df.scale = 12000
 
                 """
                 #possible ways to get info for pop ups and legend
@@ -146,7 +147,6 @@ class Main(QtGui.QMainWindow):
 
                 #arcpy.AddField_management
                 # from https://geonet.esri.com/thread/35868
-
 
                 #set map title
                 for element in arcpy.mapping.ListLayoutElements(newMap, "TEXT_ELEMENT"):
