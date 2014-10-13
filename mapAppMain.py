@@ -1,6 +1,7 @@
 from PyQt4 import QtGui
 from mapCreatorUI import Ui_MapCreator
 import arcpy, os, os.path, sys
+from arcpy import env
 
 class Main(QtGui.QMainWindow):
     def __init__(self):
@@ -113,12 +114,29 @@ class Main(QtGui.QMainWindow):
                 del origMap
 
                 #start work on newly created map
-                self.ui.logListWidget.insertItem(0, "New Map Location: "+ newMapLocation)
                 newMap = arcpy.mapping.MapDocument(newMapLocation)
 
                 #access basemap frame
                 mainFrame = arcpy.mapping.ListDataFrames(newMap, "MainFrame")[0]
                 layer_to_add = arcpy.mapping.Layer(self.uniqueLayerLoc+"\\" + fileName)
+
+                """
+                #Set values in table for layer
+                try:
+                    print self.uniqueLayerLoc+"\\" + fileName.strip(".lyr")+r".gdb\Points"
+                    rows = arcpy.UpdateCursor(self.uniqueLayerLoc+"\\" + fileName.strip(".lyr")+r".gdb\Points")
+                    for row in rows:
+                        nameValue = row.getValue("Name")
+                        #labelID has to be an int
+                        row.setValue("PopupInfo", nameValue.split("|")[0][0:len(nameValue.split("|")[0])-1])
+                        row.setValue("Name", nameValue.split("|")[1][1::])
+                        rows.updateRow(row)
+                    #delete objects to unlock them
+                    del row
+                    del rows
+                except ValueError:
+                    self.ui.logListWidget.insertItem(0, "No points found for given map.")
+                """
 
                 #add persistent layers to map
                 for layerLocation in self.layerLocations.itervalues():
@@ -127,40 +145,37 @@ class Main(QtGui.QMainWindow):
                 #add unique layer and zoom to extent of it
                 arcpy.mapping.AddLayer(mainFrame, layer_to_add, "TOP")
                 mainFrame.zoomToSelectedFeatures()
+                #zoom out slightly, to so layer doesn't take up entire frame
+                mainFrame.scale *= 1.4
 
                 #add processing areas layer to extent indicator window
                 extentFrame = arcpy.mapping.ListDataFrames(newMap, "ExtentWindow")[0]
-                arcpy.mapping.AddLayer(extentFrame, layer_to_add, "TOP")
-                extentFrame.zoomToSelectedFeatures()
-                """zoom way out from this spot"""
-                #possibly
-                #df.scale = 12000
+                extentFrame.extent = mainFrame.extent
+                #zoom way out to show main map extent
+                extentFrame.scale = 12000000
 
-                """
-                #possible ways to get info for pop ups and legend
-
-                #cursor = arcpy.SearchCursor(fc)
-                #for row in cursor:
-               #     print(row.getValue())
-                """
-                #add fields to new feature class
-
-                #arcpy.AddField_management
-                # from https://geonet.esri.com/thread/35868
+                #start work on editing table
+                #env.workspace = self.uniqueLayerLoc+"\\" + fileName.strip(".lyr")+".gdb"
 
                 #set map title
                 for element in arcpy.mapping.ListLayoutElements(newMap, "TEXT_ELEMENT"):
                     if element.name == "title":
                         element.text = fileName.strip('.lyr') + " Salmon Processing Areas & Samples"
-                #save new map
-                """set save privileges so that can overwrite existing files"""
+
+                """
+                set save privileges so that can overwrite existing files
+                necessary to prevent crashes
+                """
                 newMap.save()
 
+                #print map for test purposes
+                arcpy.mapping.ExportToPDF(newMap, r"C:\Users\Craig\Documents\ArcGIS\AutoMaps\\"+fileName.strip(".lyr")+".pdf")
                 del newMap
 
 
         self.ui.logListWidget.insertItem(0, "Map Creation Complete")
-            #scroll to scrollToItem
+        #change to insert at end of list
+        #scroll to bottom
 
 
 
